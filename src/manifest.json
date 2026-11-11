@@ -1,0 +1,69 @@
+{
+  "id": "thiscup-crystal.reaplugin",
+  "name": "小方 · CRYSTAL 控制器",
+  "author": "Chowjw’s Vibe Coding Lab",
+  "description": "小方与 Crystal 磨豆机控制面板，支持 Streamline、双磨选择、独立曲线方案及刀距启动保护。",
+  "version": "0.2.0",
+  "apiVersion": 1,
+  "permissions": [
+    "transport.ble",
+    "api",
+    "emit",
+    "pluginStorage",
+    "events.workflow"
+  ],
+  "drivers": [
+    {
+      "id": "crystal",
+      "type": "grinder",
+      "capabilities": [
+        "startStop",
+        "grindSetting",
+        "rpmControl"
+      ],
+      "observations": [
+        "setting",
+        "rpm"
+      ],
+      "ble": {
+        "match": {
+          "name": {
+            "contains": "crystal"
+          }
+        }
+      },
+      "controls": {
+        "grindSetting": {
+          "kind": "numeric",
+          "min": 1,
+          "max": 1500,
+          "step": 1
+        },
+        "rpmControl": {
+          "kind": "numeric",
+          "min": 1,
+          "max": 1500,
+          "step": 10
+        }
+      }
+    }
+  ],
+  "settings": {},
+  "api": [
+    {
+      "id": "ui",
+      "type": "http",
+      "data": {}
+    },
+    {
+      "id": "changed",
+      "type": "websocket",
+      "data": {}
+    },
+    {
+      "id": "skin",
+      "type": "http",
+      "data": {}
+    }
+  ]
+}
