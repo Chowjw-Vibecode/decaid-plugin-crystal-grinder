@@ -3,7 +3,7 @@
   "name": "小方 · CRYSTAL 控制器",
   "author": "Chowjw’s Vibe Coding Lab",
   "description": "小方与 Crystal 磨豆机控制面板，支持 Streamline、双磨选择、独立曲线方案及刀距启动保护。",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apiVersion": 1,
   "permissions": [
     "transport.ble",

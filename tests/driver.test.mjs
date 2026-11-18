@@ -88,6 +88,39 @@ test('saved partial configuration survives reload while grind size is unset',asy
 
 test('apply waits for observed busy-to-idle and 1500ms stability without starting',async()=>{
   const f=await fixture();await f.connect();const id=f.submit('apply',{config:CONFIG});const result=await f.completion(id);assert.equal(result.status,'done',result.error);assert.equal(f.gatt.starts().length,0);const adjust=f.gatt.writes.find(x=>x.key==='bootSign'&&x.value===5);assert(result.finishedAt>=adjust.at+250+1500);assert.deepEqual(f.state().config,CONFIG);assert.equal(f.state().values.servoAngle,220);assert.equal(f.gatt.maxInflight,1);
+  const {targetUm,gattReads}=result.adjustment;
+  assert.equal(targetUm,220);
+  assert.equal(gattReads.targetAngle.value,220);
+  assert.equal(gattReads.targetAngle.base64,encode(220));
+  assert(gattReads.targetAngle.at<=adjust.at);
+  assert.equal(gattReads.servoAngle.value,220);
+  assert.equal(gattReads.servoAngle.base64,encode(220));
+  assert.equal(gattReads.sysState.value,0);
+  assert(gattReads.servoAngle.at>=adjust.at+250+1500);
+});
+
+test('adjustment timeout keeps the direct zero read distinct from notifications and later reads',async()=>{
+  const config={...CONFIG,grindSize:640};
+  const f=await fixture({initialValues:{servoAngle:501}});
+  await f.connect();
+  f.gatt.raw.servoAngle=encode(0);
+  const id=f.submit('apply',{config});
+  const result=await f.completion(id);
+  assert.equal(result.status,'error');
+  assert.match(result.error,/调距未确认到位/);
+  assert.equal(result.adjustment.targetUm,640);
+  const {gattReads}=result.adjustment;
+  assert.equal(gattReads.targetAngle.value,640);
+  assert.equal(gattReads.servoAngle.value,0);
+  assert.equal(gattReads.servoAngle.base64,'AAA=');
+  assert.equal(gattReads.sysState.value,0);
+  assert(gattReads.servoAngle.at>result.startedAt);
+  delete f.gatt.raw.servoAngle;
+  f.gatt.notify('servoAngle',640);
+  assert.equal((await f.completion(f.submit('readAll'))).status,'done');
+  assert.equal(f.state().values.servoAngle,640);
+  assert.deepEqual(f.state().operations.find(x=>x.id===id),result);
+  assert.equal(f.gatt.starts().length,0);
 });
 
 test('matching position without a busy transition never authorizes start',async()=>{
@@ -116,6 +149,10 @@ test('Stop waits behind the actual in-flight GATT promise, with no concurrent GA
 
 test('disconnect cancels pending start and reconnect is read-only',async()=>{
   const f=await fixture();await f.connect();const id=f.submit('start',{config:CONFIG});await f.clock.until(()=>f.gatt.writes.some(x=>x.key==='bootSign'&&x.value===5));f.gatt.drop();await f.clock.tick(2500);assert.equal(f.gatt.starts().length,0);assert.equal(f.state().connected,false);const writes=f.gatt.writes.length;f.gatt.disconnected=false;f.gatt.subscribers={};await f.connect();await f.clock.tick(3000);assert.equal(f.gatt.writes.length,writes);assert.equal(f.gatt.starts().length,0);assert.equal(f.state().operations.find(x=>x.id===id).status,'cancelled');
+  const cancelled=f.state().operations.find(x=>x.id===id);
+  assert.equal(cancelled.adjustment.targetUm,220);
+  assert.equal(cancelled.adjustment.gattReads.targetAngle.value,220);
+  assert.equal(cancelled.adjustment.gattReads.servoAngle,undefined);
 });
 
 test('readAll is an acknowledged asynchronous receipt and does not write',async()=>{

@@ -1,10 +1,10 @@
-# 小方 · CRYSTAL 控制器 0.2.0
+# 小方 · CRYSTAL 控制器 0.2.1
 
 Decaid 独立磨豆机插件，兼容「这一杯 · OneCup」与支持插件页面入口的 Streamline。皮肤与磨豆机插件分别安装、分别更新。
 
 ## 下载与安装
 
-[国内发行页](https://gitee.com/chowjw/decaid-plugin-crystal-grinder/releases/tag/v0.2.0) · [国内 ZIP](https://gitee.com/chowjw/decaid-plugin-crystal-grinder/releases/download/v0.2.0/thiscup-crystal.reaplugin.zip) · [GitHub 发行页](https://github.com/Chowjw-Vibecode/decaid-plugin-crystal-grinder/releases/tag/v0.2.0) · [直接下载 ZIP](https://github.com/Chowjw-Vibecode/decaid-plugin-crystal-grinder/releases/download/v0.2.0/thiscup-crystal.reaplugin.zip)
+[国内发行页](https://gitee.com/chowjw/decaid-plugin-crystal-grinder/releases/tag/v0.2.1) · [国内 ZIP](https://gitee.com/chowjw/decaid-plugin-crystal-grinder/releases/download/v0.2.1/thiscup-crystal.reaplugin.zip) · [GitHub 发行页](https://github.com/Chowjw-Vibecode/decaid-plugin-crystal-grinder/releases/tag/v0.2.1) · [直接下载 ZIP](https://github.com/Chowjw-Vibecode/decaid-plugin-crystal-grinder/releases/download/v0.2.1/thiscup-crystal.reaplugin.zip)
 
 推荐在 Decaid 中打开 **Plugins → Plugin actions → Install plugin → GitHub Release**：
 
@@ -39,7 +39,7 @@ OneCup：从准备页研磨入口打开。支持插件页面入口的 Streamline
 
 ```sh
 node build.mjs
-node --test tests/driver.test.mjs tests/entry.test.mjs
+node --test tests/*.test.mjs
 npm install --no-save --package-lock=false playwright
 npx playwright install chromium
 node tests/panel-browser.cjs

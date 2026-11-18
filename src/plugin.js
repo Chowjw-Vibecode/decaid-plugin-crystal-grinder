@@ -111,9 +111,14 @@ function createPlugin(host) {
         setting:parametersConfirmed()&&positionKnown?String(values.servoAngle):null,error,phase,logs:copy(log),
         grind:grind?{id:grind.id,ack:grind.ack,busy:grind.busy}:null};
     }
-    function observe(key,data,owner) {
+    function observe(key,data,owner,fromRead=false) {
       if(link!==owner)return;
       const value=decode(key,data),previous=values[key];values[key]=value;
+      // Attach fresh reads to the receipt. Notifications only update live state.
+      const adjustment=active?.adjustment;
+      if(fromRead&&adjustment&&['servoAngle','targetAngle','sysState'].includes(key)) {
+        adjustment.gattReads[key]={value,base64:data,at:Date.now()};
+      }
       if(key==='sysState'&&value===1){busySeen=true;motionRevision++;if(grind)grind.busy=true;}
       if(key==='servoAngle'&&previous!==value)motionRevision++;
       if(key==='servoAngle'&&value>0)positionKnown=true;
@@ -124,7 +129,7 @@ function createPlugin(host) {
       const work=ioTail.then(async()=>{
         check(token,owner);
         let result;
-        if(action==='read') {result=await owner.session.gatt.read(SERVICE,characteristic(key));check(token,owner);return observe(key,result,owner);}
+        if(action==='read') {result=await owner.session.gatt.read(SERVICE,characteristic(key));check(token,owner);return observe(key,result,owner,true);}
         if(action==='write') {
           if(!['motorRpm','feedRpm','bootSign','targetAngle'].includes(key))throw new Error('该通道不可写');
           integer(value,key==='bootSign'?5:MAX[key],key);
@@ -233,6 +238,9 @@ function createPlugin(host) {
       }
       const token=advance(),owner=link;
       const record={id:device.id+':'+(++nextId),kind,status:'running',startedAt:Date.now()};
+      if(targetConfig||kind==='setting') {
+        record.adjustment={targetUm:targetConfig?.grindSize??input.value,gattReads:{}};
+      }
       records.push(record);if(records.length>24)records.shift();active=record;error=null;
       // Return an operation receipt before the host's 10 second invocation budget.
       const task=(async()=>{
